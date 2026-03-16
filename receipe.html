@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="recipeApp">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Planner SPA</title>
+
+    <!-- AngularJS & Routing CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular-route.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --primary-dark: #ee5253;
+            --secondary-color: #10ac84;
+            --bg-color: #f7f1e3;
+            --card-bg: #ffffff;
+            --text-main: #2d3436;
+            --text-light: #636e72;
+            --border-color: #dfe6e9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        /* --- Navigation Bar --- */
+        .navbar {
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5%;
+            height: 70px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links li a {
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links li a:hover {
+            color: var(--primary-color);
+            background-color: rgba(255, 107, 107, 0.1);
+        }
+
+        .nav-links li a.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* --- Main Container --- */
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h1.page-title {
+            font-size: 2.2rem;
+            margin-bottom: 25px;
+            color: var(--text-main);
+        }
+
+        /* --- Utilities --- */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        /* --- Grid Layouts --- */
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .recipe-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .recipe-meta {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .recipe-tags span {
+            background: rgba(16, 172, 132, 0.1);
+            color: var(--secondary-color);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* --- Form Styles --- */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* --- Planner Table --- */
+        .planner-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+        }
+
+        .planner-table th {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: left;
+            padding: 15px;
+        }
+
+        .planner-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .planner-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .day-label {
+            font-weight: 600;
+            width: 150px;
+        }
+
+        .recipe-select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .dashboard-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--primary-color);
+        }
+
+        .stat-box h3 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+        }
+
+        .stat-box p {
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        /* --- Login Screen --- */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-color);
+        }
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .login-card h2 { margin-bottom: 20px; color: var(--primary-color); }
+        .login-error { color: var(--primary-dark); margin-bottom: 15px; font-size: 0.9rem; }
+    </style>
+</head>
+
+<body ng-controller="MainCtrl">
+
+    <!-- Main App - Direct Access (login removed) -->
+        <!-- Navigation Menu -->
+        <nav class="navbar">
+        <div class="nav-brand">
+            🍲 Culinary Planner
+        </div>
+            <ul class="nav-links">
+                <li><a href="#!/" ng-class="{ 'active': isActive('/') }">Dashboard</a></li>
+                <li><a href="#!/recipes" ng-class="{ 'active': isActive('/recipes') }">My Recipes</a></li>
+                <li><a href="#!/add-recipe" ng-class="{ 'active': isActive('/add-recipe') }">Add Recipe</a></li>
+                <li><a href="#!/planner" ng-class="{ 'active': isActive('/planner') }">Weekly Planner</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Dynamic Content Area -->
+        <div class="container">
+            <div ng-view></div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TEMPLATES (Embedded for single-file operation) -->
+    <!-- ============================================== -->
+
+    <!-- Dashboard Template -->
+    <script type="text/ng-template" id="dashboard.htm">
+        <h1 class="page-title">Welcome back, Chef! 👨‍🍳</h1>
+        
+        <div class="dashboard-stats">
+            <div class="stat-box">
+                <h3>{{ summary.totalRecipes }}</h3>
+                <p>Saved Recipes</p>
+            </div>
+            <div class="stat-box">
+                <h3>{{ summary.plannedMeals }}</h3>
+                <p>Meals Planned This Week</p>
+            </div>
+            <div class="stat-box" style="border-color: var(--secondary-color);">
+                <h3 style="color: var(--secondary-color);">{{ summary.shoppingItems }}</h3>
+                <p>Ingredients Needed</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 15px;">Today's Menu</h2>
+            <div ng-if="todayMeal">
+                <h3 class="recipe-title">{{ todayMeal.name }}</h3>
+                <p class="recipe-meta">
+                    <span>⏱️ {{ todayMeal.prepTime }} mins</span>
+                    <span>🔥 {{ todayMeal.difficulty }}</span>
+                </p>
+                <a href="#!/planner" class="btn btn-primary" style="margin-top: 10px;">View Full Week</a>
+            </div>
+            <div ng-if="!todayMeal" style="color: var(--text-light); font-style: italic;">
+                You haven't planned a meal for today yet.
+                <br><br>
+                <a href="#!/planner" class="btn btn-secondary">Plan a Meal</a>
+            </div>
+        </div>
+    </script>
+
+    <!-- Recipe Gallery Template -->
+    <script type="text/ng-template" id="recipes.htm">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h1 class="page-title" style="margin-bottom: 0;">My Cookbook</h1>
+            <input type="text" class="form-control" placeholder="Search recipes..." ng-model="searchQuery" style="width: 300px;">
+        </div>
+
+        <div class="recipe-grid">
+            <div class="card" ng-repeat="recipe in recipes | filter:searchQuery">
+                <h3 class="recipe-title">{{ recipe.name }}</h3>
+                <div class="recipe-meta">
+                    <span>⏱️ {{ recipe.prepTime }} mins</span>
+                    <span>🔥 {{ recipe.difficulty }}</span>
+                </div>
+                <div class="recipe-tags" style="margin-bottom: 15px;">
+                    <span ng-repeat="tag in recipe.tags">{{ tag }}</span>
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text-light); line-height: 1.6; border-top: 1px solid #eee; padding-top: 10px;">
+                    <strong>Ingredients:</strong> {{ recipe.ingredients.join(', ') }}
+                </p>
+                <button class="btn btn-primary" style="margin-top: 15px; padding: 6px 12px; font-size: 0.85rem;" ng-click="deleteRecipe(recipe.id)">🗑️ Remove</button>
+            </div>
+            
+            <div ng-if="(recipes | filter:searchQuery).length === 0" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-light);">
+                No recipes found matching your search.
+            </div>
+        </div>
+    </script>
+
+    <!-- Add Recipe Template -->
+    <script type="text/ng-template" id="add-recipe.htm">
+        <h1 class="page-title">Add New Recipe</h1>
+        
+        <div class="card" style="max-width: 700px; margin: 0 auto;">
+            <form name="recipeForm" ng-submit="saveRecipe()" novalidate>
+                <div class="form-group">
+                    <label>Recipe Name</label>
+                    <input type="text" class="form-control" ng-model="newRecipe.name" required>
+                </div>
+                
+                <div style="display: flex; gap: 20px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Prep Time (minutes)</label>
+                        <input type="number" class="form-control" ng-model="newRecipe.prepTime" required min="1">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Difficulty</label>
+                        <select class="form-control" ng-model="newRecipe.difficulty" required>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Ingredients (comma separated)</label>
+                    <textarea class="form-control" ng-model="newRecipe.ingredientsRaw" rows="3" placeholder="e.g. 2 Eggs, Flour, Sugar, Milk" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Categories/Tags (comma separated)</label>
+                    <input type="text" class="form-control" ng-model="newRecipe.tagsRaw" placeholder="e.g. Breakfast, Vegetarian, Dessert">
+                </div>
+
+                <button type="submit" class="btn btn-primary" ng-disabled="recipeForm.$invalid" style="width: 100%; font-size: 1.1rem; padding: 12px;">Save Recipe to Cookbook</button>
+                
+                <div ng-show="message" style="margin-top: 15px; color: var(--secondary-color); font-weight: 500; text-align: center;">
+                    {{ message }}
+                </div>
+            </form>
+        </div>
+    </script>
+
+    <!-- Meal Planner Template -->
+    <script type="text/ng-template" id="planner.htm">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h1 class="page-title" style="margin-bottom: 0;">Weekly Meal Planner</h1>
+            <button class="btn btn-secondary" ng-click="clearPlanner()">Clear Plan</button>
+        </div>
+
+        <table class="planner-table">
+            <thead>
+                <tr>
+                    <th class="day-label">Day</th>
+                    <th>Selected Meal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="day in daysOfWeek">
+                    <td class="day-label">{{ day }}</td>
+                    <td>
+                        <!-- Dynamic select populated with the shared recipe list -->
+                        <select class="recipe-select" ng-model="planner[day]" ng-options="recipe.name for recipe in recipes track by recipe.id" ng-change="savePlanner()">
+                            <option value="">-- Choose a Recipe --</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="card" style="margin-top: 30px;" ng-if="getShoppingList().length > 0">
+            <h2 style="margin-bottom: 15px; color: var(--secondary-color);">🛒 Consolidated Shopping List</h2>
+            <ul style="padding-left: 20px; line-height: 1.8;">
+                <li ng-repeat="item in getShoppingList()">{{ item }}</li>
+            </ul>
+        </div>
+    </script>
+
+    <!-- ANGULARJS LOGIC                                -->
+    
+    <script>
+        var app = angular.module("recipeApp", ["ngRoute"]);
+
+        // --- Routing Configuration ---
+        app.config(function ($routeProvider) {
+            $routeProvider
+                .when("/", { templateUrl: "dashboard.htm", controller: "DashboardCtrl" })
+                .when("/recipes", { templateUrl: "recipes.htm", controller: "RecipeListCtrl" })
+                .when("/add-recipe", { templateUrl: "add-recipe.htm", controller: "AddRecipeCtrl" })
+                .when("/planner", { templateUrl: "PlannerCtrl.htm", controller: "PlannerCtrl", templateUrl: "planner.htm" }) // Fallback override
+                .otherwise({ redirectTo: "/" });
+        });
+
+        // --- Data Service Factory ---
+        
+        app.factory("RecipeDataService", function () {
+            var recipes = [
+                { id: 1, name: 'Spaghetti Carbonara', prepTime: 25, difficulty: 'Medium', tags: ['Italian', 'Pasta', 'Dinner'], ingredients: ['Spaghetti', 'Eggs', 'Pancetta', 'Parmesan', 'Black Pepper'] },
+                { id: 2, name: 'Avocado Toast', prepTime: 10, difficulty: 'Easy', tags: ['Breakfast', 'Vegetarian', 'Quick'], ingredients: ['Sourdough Bread', 'Avocado', 'Lemon Juice', 'Chili Flakes'] },
+                { id: 3, name: 'Chicken Tikka Masala', prepTime: 45, difficulty: 'Hard', tags: ['Indian', 'Curry', 'Dinner'], ingredients: ['Chicken Breast', 'Yogurt', 'Tomato Puree', 'Cream', 'Garam Masala'] },
+                { id: 4, name: 'Greek Salad', prepTime: 15, difficulty: 'Easy', tags: ['Healthy', 'Vegetarian', 'Lunch'], ingredients: ['Cucumber', 'Tomatoes', 'Feta Cheese', 'Red Onion', 'Olives', 'Olive Oil'] },
+                { id: 5, name: 'Margherita Pizza', prepTime: 30, difficulty: 'Medium', tags: ['Italian', 'Vegetarian', 'Dinner'], ingredients: ['Pizza Dough', 'Tomato Sauce', 'Mozzarella', 'Basil', 'Olive Oil'] },
+                { id: 6, name: 'Beef Burger', prepTime: 20, difficulty: 'Easy', tags: ['American', 'Meat', 'Lunch'], ingredients: ['Ground Beef', 'Burger Buns', 'Lettuce', 'Tomato', 'Cheese'] },
+                { id: 7, name: 'Chocolate Cake', prepTime: 60, difficulty: 'Hard', tags: ['Dessert', 'Sweet'], ingredients: ['Flour', 'Sugar', 'Cocoa Powder', 'Eggs', 'Butter', 'Milk'] }
+            ];
+
+            var weeklyPlanner = {
+                'Monday': recipes[0],
+                'Tuesday': null,
+                'Wednesday': recipes[1],
+                'Thursday': null,
+                'Friday': null,
+                'Saturday': recipes[2],
+                'Sunday': null
+            };
+
+            return {
+                getRecipes: function () { return recipes; },
+                addRecipe: function (recipe) {
+                    recipe.id = new Date().getTime();
+                    recipes.push(recipe);
+                },
+                deleteRecipe: function (id) {
+                    var idx = recipes.findIndex(r => r.id === id);
+                    if (idx > -1) recipes.splice(idx, 1);
+
+                    // Cleanup planner if recipe is deleted
+                    for (var day in weeklyPlanner) {
+                        if (weeklyPlanner[day] && weeklyPlanner[day].id === id) {
+                            weeklyPlanner[day] = null;
+                        }
+                    }
+                },
+                getPlanner: function () { return weeklyPlanner; },
+                updatePlanner: function (newPlanner) { weeklyPlanner = newPlanner; },
+
+                // Helper to extract unique ingredients from all planned meals
+                getShoppingList: function () {
+                    var list = new Set();
+                    for (var day in weeklyPlanner) {
+                        if (weeklyPlanner[day]) {
+                            weeklyPlanner[day].ingredients.forEach(i => list.add(i.trim().toLowerCase()));
+                        }
+                    }
+                    return Array.from(list);
+                }
+            };
+        });
+
+        // --- Main navigation controller ---
+        app.controller("MainCtrl", function ($scope, $location) {
+            $scope.isActive = function (route) {
+                return route === $location.path();
+            };
+            // Login/logout removed - direct app access
+        });
+
+        // --- Dashboard Controller ---
+        app.controller("DashboardCtrl", function ($scope, RecipeDataService) {
+            var recipes = RecipeDataService.getRecipes();
+            var planner = RecipeDataService.getPlanner();
+            var shoppingList = RecipeDataService.getShoppingList();
+
+            // Calculate planned meals count
+            var plannedMealsCount = 0;
+            for (var d in planner) { if (planner[d]) plannedMealsCount++; }
+
+            $scope.summary = {
+                totalRecipes: recipes.length,
+                plannedMeals: plannedMealsCount,
+                shoppingItems: shoppingList.length
+            };
+
+            // Figure out today's day to show today's meal
+            var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            var todayName = days[new Date().getDay()];
+            $scope.todayMeal = planner[todayName];
+        });
+
+        // --- Recipe List Gallery Controller ---
+        app.controller("RecipeListCtrl", function ($scope, RecipeDataService) {
+            $scope.recipes = RecipeDataService.getRecipes();
+            $scope.searchQuery = "";
+
+            $scope.deleteRecipe = function (id) {
+                if (confirm("Are you sure you want to delete this recipe?")) {
+                    RecipeDataService.deleteRecipe(id);
+                }
+            }
+        });
+
+        // --- Add Form Controller ---
+        app.controller("AddRecipeCtrl", function ($scope, RecipeDataService, $timeout) {
+            $scope.newRecipe = { difficulty: 'Medium' };
+            $scope.message = "";
+
+            $scope.saveRecipe = function () {
+                // Parse comma-separated strings into arrays
+                var ingrs = $scope.newRecipe.ingredientsRaw ? $scope.newRecipe.ingredientsRaw.split(',').map(s => s.trim()) : [];
+                var tgs = $scope.newRecipe.tagsRaw ? $scope.newRecipe.tagsRaw.split(',').map(s => s.trim()) : [];
+
+                var recipeObj = {
+                    name: $scope.newRecipe.name,
+                    prepTime: $scope.newRecipe.prepTime,
+                    difficulty: $scope.newRecipe.difficulty,
+                    ingredients: ingrs,
+                    tags: tgs
+                };
+
+                RecipeDataService.addRecipe(recipeObj);
+
+                $scope.message = "Recipe added to your cookbook!";
+                $scope.newRecipe = { difficulty: 'Medium' };
+                $scope.recipeForm.$setPristine();
+
+                $timeout(function () { $scope.message = ""; }, 3000);
+            };
+        });
+
+        // --- Weekly Planner Controller ---
+        app.controller("PlannerCtrl", function ($scope, RecipeDataService) {
+            $scope.daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            $scope.recipes = RecipeDataService.getRecipes();
+            $scope.planner = RecipeDataService.getPlanner();
+
+            $scope.savePlanner = function () {
+                // The ng-model binds directly to the object, but if we need persistent hooks:
+                RecipeDataService.updatePlanner($scope.planner);
+            };
+
+            $scope.clearPlanner = function () {
+                if (confirm("Clear the whole week's plan?")) {
+                    for (var day of $scope.daysOfWeek) {
+                        $scope.planner[day] = null;
+                    }
+                    $scope.savePlanner();
+                }
+            };
+
+            $scope.getShoppingList = function () {
+                return RecipeDataService.getShoppingList();
+            };
+        });
+
+    </script>
+</body>
+
+</html>
